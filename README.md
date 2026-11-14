@@ -1,0 +1,2 @@
+# CompressionTest
+Test compression methods
