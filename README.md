@@ -1,41 +1,47 @@
 # CompressionTest
 
-Compression benchmark suite.
+[![CI](https://github.com/kapildhinwa2010-dev/CompressionTest/actions/workflows/ci.yml/badge.svg)](https://github.com/kapildhinwa2010-dev/CompressionTest/actions/workflows/ci.yml)
+[![CI](https://github.com/kapildhinwa2010-dev/CompressionTest/actions/workflows/codeql.yml/badge.svg)](https://github.com/kapildhinwa2010-dev/CompressionTest/actions/workflows/codeql.yml)
+[![Python 3.9+](https://img.shields.io/badge/python-3.9%2B-blue)](https://www.python.org/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+
+Compression test harness: four strategies (SVD rank, quantization, Fourier basis, hybrid) with uniform error reporting.
 
 **Part of the [Kapildhinwa2010-dev Toolkit](https://github.com/kapildhinwa2010-dev/Kapildhinwa2010-dev).**
 
-![CI](https://github.com/kapildhinwa2010-dev/CompressionTest/actions/workflows/ci.yml/badge.svg)
-![CodeQL](https://github.com/kapildhinwa2010-dev/CompressionTest/actions/workflows/codeql.yml/badge.svg)
-![Python](https://img.shields.io/badge/python-3.9%2B-blue)
-![License](https://img.shields.io/badge/license-MIT-green)
+## What it does
 
-## ✨ Features
+benchmark(matrix) runs all four strategies on one 2-D matrix and
+returns per-method relative Frobenius error and a pass/fail flag at a
+0.5 threshold. A test harness for the toolkit codecs, not a
+production compressor.
 
-- Four strategies: SVD rank, quantization, Fourier basis, hybrid
-- Uniform relative-error reporting
-- One-call `benchmark()` over all methods
+## Install
 
-## 📦 Install
+    pip install -r requirements.txt
 
-```bash
-pip install -r requirements.txt
-```
+## Quick start
 
-## 🚀 Quick start
+    from compressiontest import benchmark
 
-```python
-from compressiontest import benchmark
+    for result in benchmark(W):
+        print(result["method"], result["relative_error"], result["passed"])
 
-for result in benchmark(W):
-    print(result['method'], result['relative_error'])
-```
+## API
 
-## 🧪 Tests
+- benchmark(matrix) - list of {method, relative_error, passed}
 
-```bash
-pytest tests/ -v
-```
+## Honest results and limitations
 
-## 📄 License
+- The 0.5 "passed" threshold is arbitrary; real pipelines pick error
+  budgets per use case.
+- On random matrices every method has relative error near 1.0 - that
+  is the expected honest outcome, not a bug.
+- Storage size is NOT reported here (see Compression-Lib for byte
+  estimates); error alone is not a compression metric.
+- No task-accuracy evaluation: reconstruction error is the only
+  quality measure.
 
-MIT — see [LICENSE](LICENSE).
+## License
+
+MIT - see [LICENSE](LICENSE).
