@@ -1,48 +1,62 @@
 # CompressionTest
 
-[![CI](https://github.com/kapildhinwa2010-dev/CompressionTest/actions/workflows/ci.yml/badge.svg)](https://github.com/kapildhinwa2010-dev/CompressionTest/actions/workflows/ci.yml)
-[![CodeQL](https://github.com/kapildhinwa2010-dev/CompressionTest/actions/workflows/codeql.yml/badge.svg)](https://github.com/kapildhinwa2010-dev/CompressionTest/actions/workflows/codeql.yml)
+CompressionTest is a small Python utility for comparing four approximate reconstruction methods on a non-empty, two-dimensional numeric matrix. It reports relative Frobenius reconstruction error and a threshold-based pass flag; it does not measure compressed storage size.
 
-[![Python 3.9+](https://img.shields.io/badge/python-3.9%2B-blue)](https://www.python.org/)
-[![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+The project is at an early utility/library stage (version 0.1.0 in `pyproject.toml`). Its tests cover basic behavior on synthetic smooth matrices and invalid inputs. It should not be treated as a general-purpose compression tool or a performance benchmark.
 
-Compression test harness: four strategies (SVD rank, quantization, Fourier basis, hybrid) with uniform error reporting.
+## Implemented methods
 
-**Part of the [Kapildhinwa2010-dev Toolkit](https://github.com/kapildhinwa2010-dev/Kapildhinwa2010-dev).**
+The `compressiontest` module provides:
 
-## What it does
+- `svd_compress(matrix, rank=4)`: truncates a singular-value decomposition to the requested rank, capped at the available singular values.
+- `quantize(matrix, bits=8)`: uniformly quantizes values over the input matrix's minimum-to-maximum range; supported bit settings are 1 through 16.
+- `fourier_compress(matrix, num_coeffs=4)`: fits each row to a constant-plus-sine/cosine Fourier basis over the matrix's columns.
+- `hybrid_compress(matrix, rank=4, bits=8)`: applies SVD truncation followed by quantization.
+- `benchmark(matrix)`: runs SVD rank 4, 8-bit quantization, Fourier with 4 harmonics, and the rank-4/8-bit hybrid. It returns one dictionary per method with `method`, `relative_error`, and `passed`. The pass flag is `relative_error < 0.5`.
 
-benchmark(matrix) runs all four strategies on one 2-D matrix and
-returns per-method relative Frobenius error and a pass/fail flag at a
-0.5 threshold. A test harness for the toolkit codecs, not a
-production compressor.
+Inputs are converted to NumPy `float64`; compression and benchmark functions reject empty or non-2D matrices. `benchmark` defines the relative error as the Frobenius norm of the reconstruction difference divided by the input's Frobenius norm (and returns zero error for an all-zero input).
 
-## Install
+## Requirements and use
 
-    pip install -r requirements.txt
+Python 3.9 or newer and NumPy 1.24 or newer are declared in `pyproject.toml`. From the repository root, install the listed dependencies:
 
-## Quick start
+```bash
+python -m pip install -r requirements.txt
+```
 
-    from compressiontest import benchmark
+Import the module from the repository root and pass a matrix as a NumPy array:
 
-    for result in benchmark(W):
-        print(result["method"], result["relative_error"], result["passed"])
+```python
+import numpy as np
+from compressiontest import benchmark
 
-## API
+matrix = np.array([[1.0, 2.0, 3.0], [2.0, 3.0, 4.0]])
+for result in benchmark(matrix):
+    print(result["method"], result["relative_error"], result["passed"])
+```
 
-- benchmark(matrix) - list of {method, relative_error, passed}
+There is no CLI, file input/output workflow, or command for compressing and saving data in the repository.
 
-## Honest results and limitations
+## Tests and CI
 
-- The 0.5 "passed" threshold is arbitrary; real pipelines pick error
-  budgets per use case.
-- On random matrices every method has relative error near 1.0 - that
-  is the expected honest outcome, not a bug.
-- Storage size is NOT reported here (see Compression-Lib for byte
-  estimates); error alone is not a compression metric.
-- No task-accuracy evaluation: reconstruction error is the only
-  quality measure.
+On commit `da4dab5572d504cb9436ae84b687c7051201559d` (the inspected `main` HEAD), `python3 -m pytest -q` completed successfully: **10 tests passed**. The GitHub Actions CI and CodeQL workflow runs associated with that same commit were also completed with a `success` conclusion when inspected. CI is configured for Python 3.10, 3.11, and 3.12; that matrix is narrower than the Python `>=3.9` declaration.
+
+To run the test suite locally after installing dependencies:
+
+```bash
+python -m pytest -q
+```
+
+The tests exercise approximation behavior on generated smooth matrices, supported validation cases, and the shape of benchmark results. They do not establish broad accuracy across real datasets or demonstrate storage savings or runtime performance.
+
+## Limitations
+
+- The `passed` threshold of 0.5 is fixed in `benchmark` and is not configurable; it is not a use-case-specific quality target.
+- Results report reconstruction error only. The code does not calculate encoded byte size, compression ratio, runtime comparisons, or downstream task accuracy.
+- The tests use synthetic smooth matrices and do not provide a representative evaluation across data types or workloads.
+- The Fourier approximation assumes a periodic basis along the column dimension; its suitability depends on the input.
+- This repository does not provide a file format, serializer, command-line interface, or production compression/decompression pipeline.
 
 ## License
 
-MIT - see [LICENSE](LICENSE).
+The repository includes an MIT License. See [LICENSE](LICENSE) for its terms and copyright notice.
